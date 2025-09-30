@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: SpecSmash Simple Requests
+  version: 1.0.0
+paths:
+  /ping:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  minLength: 1
+                count:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: ok
+  /blob:
+    post:
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: string
+                  format: byte
+      responses:
+        '200':
+          description: ok
+

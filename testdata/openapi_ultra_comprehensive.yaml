@@ -1,0 +1,1223 @@
+openapi: 3.0.3
+info:
+  title: SpecSmash Ultra Comprehensive API
+  version: 2.0.0
+  description: An extremely comprehensive OpenAPI spec for testing all schema features
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created successfully
+  /products:
+    post:
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Product created successfully
+  /orders:
+    post:
+      summary: Create a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '201':
+          description: Order created successfully
+  /events:
+    post:
+      summary: Submit an event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUnion'
+      responses:
+        '200':
+          description: Event processed
+  /search:
+    post:
+      summary: Advanced search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+  /analytics:
+    post:
+      summary: Submit analytics data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsData'
+      responses:
+        '200':
+          description: Analytics data received
+  /files:
+    post:
+      summary: Upload file metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileUpload'
+      responses:
+        '200':
+          description: File metadata processed
+  /notifications:
+    post:
+      summary: Send notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      responses:
+        '200':
+          description: Notification sent
+  /configurations:
+    post:
+      summary: Update configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationUpdate'
+      responses:
+        '200':
+          description: Configuration updated
+  /payments:
+    post:
+      summary: Process payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment processed
+
+components:
+  schemas:
+    # Basic types with formats
+    UUID:
+      type: string
+      format: uuid
+      example: "123e4567-e89b-12d3-a456-426614174000"
+    
+    Email:
+      type: string
+      format: email
+      pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+      minLength: 5
+      maxLength: 254
+    
+    DateTime:
+      type: string
+      format: date-time
+      example: "2023-12-25T10:30:00Z"
+    
+    Date:
+      type: string
+      format: date
+      example: "2023-12-25"
+    
+    URI:
+      type: string
+      format: uri
+      example: "https://example.com/resource"
+    
+    URIReference:
+      type: string
+      format: uri-reference
+      example: "/api/v1/users/123"
+    
+    Hostname:
+      type: string
+      format: hostname
+      example: "api.example.com"
+    
+    IPv4:
+      type: string
+      format: ipv4
+      example: "192.168.1.1"
+    
+    IPv6:
+      type: string
+      format: ipv6
+      example: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+    
+    Base64Data:
+      type: string
+      format: byte
+      example: "SGVsbG8gV29ybGQ="
+    
+    BinaryData:
+      type: string
+      format: binary
+    
+    # Numeric types with constraints
+    PositiveInteger:
+      type: integer
+      minimum: 1
+      maximum: 2147483647
+      example: 42
+    
+    NonNegativeInteger:
+      type: integer
+      minimum: 0
+      example: 0
+    
+    Int32:
+      type: integer
+      format: int32
+      minimum: -2147483648
+      maximum: 2147483647
+    
+    Int64:
+      type: integer
+      format: int64
+      minimum: -9223372036854775808
+      maximum: 9223372036854775807
+    
+    Float32:
+      type: number
+      format: float
+      minimum: -3.4028235e+38
+      maximum: 3.4028235e+38
+    
+    Float64:
+      type: number
+      format: double
+      minimum: -1.7976931348623157e+308
+      maximum: 1.7976931348623157e+308
+    
+    Percentage:
+      type: number
+      minimum: 0
+      maximum: 100
+      multipleOf: 0.01
+    
+    Currency:
+      type: number
+      multipleOf: 0.01
+      minimum: 0
+      maximum: 999999999.99
+    
+    # String types with patterns and enums
+    ProductCode:
+      type: string
+      pattern: '^[A-Z]{2,3}-[0-9]{4,6}$'
+      example: "PRD-123456"
+    
+    PhoneNumber:
+      type: string
+      pattern: '^\+?[1-9]\d{1,14}$'
+      example: "+1234567890"
+    
+    CountryCode:
+      type: string
+      enum: [US, CA, GB, DE, FR, JP, AU, BR, IN, CN]
+      example: "US"
+    
+    CurrencyCode:
+      type: string
+      enum: [USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, INR, BRL]
+      example: "USD"
+    
+    Status:
+      type: string
+      enum: [active, inactive, pending, suspended, deleted]
+      example: "active"
+    
+    Priority:
+      type: string
+      enum: [low, medium, high, critical]
+      example: "medium"
+    
+    # Complex object schemas
+    Address:
+      type: object
+      required: [street, city, country]
+      properties:
+        street:
+          type: string
+          minLength: 1
+          maxLength: 100
+        city:
+          type: string
+          minLength: 1
+          maxLength: 50
+        state:
+          type: string
+          minLength: 2
+          maxLength: 50
+          nullable: true
+        postalCode:
+          type: string
+          pattern: '^[A-Z0-9\s-]{3,10}$'
+          nullable: true
+        country:
+          $ref: '#/components/schemas/CountryCode'
+    
+    ContactInfo:
+      type: object
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        phone:
+          $ref: '#/components/schemas/PhoneNumber'
+          nullable: true
+        website:
+          $ref: '#/components/schemas/URI'
+          nullable: true
+    
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          $ref: '#/components/schemas/Currency'
+        currency:
+          $ref: '#/components/schemas/CurrencyCode'
+    
+    # User schemas
+    UserProfile:
+      type: object
+      required: [firstName, lastName]
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 50
+        middleName:
+          type: string
+          maxLength: 50
+          nullable: true
+        displayName:
+          type: string
+          maxLength: 100
+          nullable: true
+        birthDate:
+          $ref: '#/components/schemas/Date'
+          nullable: true
+        avatar:
+          $ref: '#/components/schemas/URI'
+          nullable: true
+        bio:
+          type: string
+          maxLength: 500
+          nullable: true
+    
+    UserPreferences:
+      type: object
+      properties:
+        language:
+          type: string
+          enum: [en, es, fr, de, ja, zh, pt, it, ru, ar]
+          default: "en"
+        timezone:
+          type: string
+          pattern: '^[A-Za-z_/]+$'
+          example: "America/New_York"
+        notifications:
+          type: object
+          properties:
+            email:
+              type: boolean
+              default: true
+            sms:
+              type: boolean
+              default: false
+            push:
+              type: boolean
+              default: true
+          additionalProperties: false
+        theme:
+          type: string
+          enum: [light, dark, auto]
+          default: "auto"
+    
+    UserCreate:
+      type: object
+      required: [id, email, profile, preferences]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        email:
+          $ref: '#/components/schemas/Email'
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+        address:
+          $ref: '#/components/schemas/Address'
+          nullable: true
+        contactInfo:
+          $ref: '#/components/schemas/ContactInfo'
+          nullable: true
+        status:
+          $ref: '#/components/schemas/Status'
+          default: "active"
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 20
+          maxItems: 10
+          uniqueItems: true
+    
+    # Product schemas
+    ProductDimensions:
+      type: object
+      required: [length, width, height, unit]
+      properties:
+        length:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        width:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        height:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        unit:
+          type: string
+          enum: [mm, cm, m, in, ft]
+        weight:
+          type: number
+          minimum: 0
+          nullable: true
+        weightUnit:
+          type: string
+          enum: [g, kg, oz, lb]
+          nullable: true
+    
+    ProductVariant:
+      type: object
+      required: [sku, price]
+      properties:
+        sku:
+          $ref: '#/components/schemas/ProductCode'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        price:
+          $ref: '#/components/schemas/Money'
+        compareAtPrice:
+          $ref: '#/components/schemas/Money'
+          nullable: true
+        inventory:
+          $ref: '#/components/schemas/NonNegativeInteger'
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 100
+          maxProperties: 20
+    
+    ProductCreate:
+      type: object
+      required: [id, name, category, variants]
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+        category:
+          type: string
+          minLength: 1
+          maxLength: 50
+        subcategory:
+          type: string
+          maxLength: 50
+          nullable: true
+        brand:
+          type: string
+          maxLength: 50
+          nullable: true
+        dimensions:
+          $ref: '#/components/schemas/ProductDimensions'
+          nullable: true
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+          minItems: 1
+          maxItems: 50
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/URI'
+          maxItems: 20
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 30
+          maxItems: 20
+          uniqueItems: true
+        status:
+          $ref: '#/components/schemas/Status'
+          default: "active"
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+    
+    # Order schemas
+    OrderItem:
+      type: object
+      required: [productId, variantId, quantity, unitPrice]
+      properties:
+        productId:
+          $ref: '#/components/schemas/UUID'
+        variantId:
+          $ref: '#/components/schemas/UUID'
+        quantity:
+          $ref: '#/components/schemas/PositiveInteger'
+        unitPrice:
+          $ref: '#/components/schemas/Money'
+        discount:
+          $ref: '#/components/schemas/Money'
+          nullable: true
+        tax:
+          $ref: '#/components/schemas/Money'
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+          maxProperties: 10
+    
+    ShippingInfo:
+      type: object
+      required: [method, address]
+      properties:
+        method:
+          type: string
+          enum: [standard, express, overnight, pickup]
+        address:
+          $ref: '#/components/schemas/Address'
+        cost:
+          $ref: '#/components/schemas/Money'
+          nullable: true
+        estimatedDelivery:
+          $ref: '#/components/schemas/Date'
+          nullable: true
+        trackingNumber:
+          type: string
+          pattern: '^[A-Z0-9]{10,20}$'
+          nullable: true
+    
+    OrderCreate:
+      type: object
+      required: [orderId, customerId, items, createdAt]
+      properties:
+        orderId:
+          type: string
+          pattern: '^ORD-[0-9]{8}$'
+        customerId:
+          $ref: '#/components/schemas/UUID'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          minItems: 1
+          maxItems: 100
+        subtotal:
+          $ref: '#/components/schemas/Money'
+        tax:
+          $ref: '#/components/schemas/Money'
+          nullable: true
+        discount:
+          $ref: '#/components/schemas/Money'
+          nullable: true
+        total:
+          $ref: '#/components/schemas/Money'
+        shipping:
+          $ref: '#/components/schemas/ShippingInfo'
+          nullable: true
+        discountCode:
+          type: string
+          pattern: '^[A-Z0-9]{4,12}$'
+          nullable: true
+        notes:
+          type: string
+          maxLength: 500
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/Priority'
+          default: "medium"
+        status:
+          type: string
+          enum: [pending, confirmed, processing, shipped, delivered, cancelled]
+          default: "pending"
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+    
+    # Event schemas using oneOf
+    BaseEvent:
+      type: object
+      required: [eventId, type, timestamp, userId]
+      properties:
+        eventId:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          enum: [click, view, purchase, signup, login, logout]
+        timestamp:
+          $ref: '#/components/schemas/DateTime'
+        userId:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+        sessionId:
+          $ref: '#/components/schemas/UUID'
+        metadata:
+          type: object
+          additionalProperties: true
+          maxProperties: 20
+    
+    ClickEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          required: [elementId, elementType]
+          properties:
+            elementId:
+              type: string
+              minLength: 1
+              maxLength: 100
+            elementType:
+              type: string
+              enum: [button, link, image, form, menu]
+            coordinates:
+              type: object
+              required: [x, y]
+              properties:
+                x:
+                  $ref: '#/components/schemas/NonNegativeInteger'
+                y:
+                  $ref: '#/components/schemas/NonNegativeInteger'
+    
+    ViewEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          required: [pageUrl, pageTitle]
+          properties:
+            pageUrl:
+              $ref: '#/components/schemas/URI'
+            pageTitle:
+              type: string
+              minLength: 1
+              maxLength: 200
+            referrer:
+              $ref: '#/components/schemas/URI'
+              nullable: true
+            duration:
+              $ref: '#/components/schemas/NonNegativeInteger'
+              nullable: true
+    
+    PurchaseEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          required: [orderId, amount, items]
+          properties:
+            orderId:
+              type: string
+              pattern: '^ORD-[0-9]{8}$'
+            amount:
+              $ref: '#/components/schemas/Money'
+            items:
+              type: array
+              items:
+                type: object
+                required: [productId, quantity, price]
+                properties:
+                  productId:
+                    $ref: '#/components/schemas/UUID'
+                  quantity:
+                    $ref: '#/components/schemas/PositiveInteger'
+                  price:
+                    $ref: '#/components/schemas/Money'
+              minItems: 1
+    
+    EventUnion:
+      oneOf:
+        - $ref: '#/components/schemas/ClickEvent'
+        - $ref: '#/components/schemas/ViewEvent'
+        - $ref: '#/components/schemas/PurchaseEvent'
+      discriminator:
+        propertyName: type
+        mapping:
+          click: '#/components/schemas/ClickEvent'
+          view: '#/components/schemas/ViewEvent'
+          purchase: '#/components/schemas/PurchaseEvent'
+    
+    # Search schemas using allOf
+    SearchFilters:
+      type: object
+      properties:
+        category:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          maxItems: 10
+        priceRange:
+          type: object
+          properties:
+            min:
+              $ref: '#/components/schemas/Currency'
+            max:
+              $ref: '#/components/schemas/Currency'
+        brand:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          maxItems: 20
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        inStock:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          maxItems: 50
+    
+    SearchSort:
+      type: object
+      properties:
+        field:
+          type: string
+          enum: [relevance, price, rating, date, name, popularity]
+          default: "relevance"
+        order:
+          type: string
+          enum: [asc, desc]
+          default: "desc"
+    
+    SearchPagination:
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PositiveInteger'
+          default: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        offset:
+          $ref: '#/components/schemas/NonNegativeInteger'
+          nullable: true
+    
+    SearchRequest:
+      allOf:
+        - type: object
+          required: [query]
+          properties:
+            query:
+              type: string
+              minLength: 1
+              maxLength: 500
+            fuzzy:
+              type: boolean
+              default: false
+            boost:
+              type: object
+              additionalProperties:
+                type: number
+                minimum: 0
+                maximum: 10
+        - type: object
+          properties:
+            filters:
+              $ref: '#/components/schemas/SearchFilters'
+            sort:
+              $ref: '#/components/schemas/SearchSort'
+            pagination:
+              $ref: '#/components/schemas/SearchPagination'
+            includeAggregations:
+              type: boolean
+              default: false
+    
+    # Analytics with complex nested structures
+    AnalyticsMetric:
+      type: object
+      required: [name, value, timestamp]
+      properties:
+        name:
+          type: string
+          pattern: '^[a-zA-Z][a-zA-Z0-9_.-]*$'
+          minLength: 1
+          maxLength: 100
+        value:
+          type: number
+        timestamp:
+          $ref: '#/components/schemas/DateTime'
+        dimensions:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 100
+          maxProperties: 20
+        unit:
+          type: string
+          enum: [count, seconds, bytes, percent, currency]
+          nullable: true
+    
+    AnalyticsData:
+      type: object
+      required: [source, metrics]
+      properties:
+        source:
+          type: string
+          minLength: 1
+          maxLength: 50
+        version:
+          type: string
+          pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+          default: "1.0.0"
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsMetric'
+          minItems: 1
+          maxItems: 1000
+        batchId:
+          $ref: '#/components/schemas/UUID'
+          nullable: true
+        metadata:
+          type: object
+          properties:
+            environment:
+              type: string
+              enum: [development, staging, production]
+            region:
+              type: string
+              pattern: '^[a-z]{2}-[a-z]+-[0-9]+$'
+            tags:
+              type: object
+              additionalProperties:
+                type: string
+                maxLength: 50
+              maxProperties: 10
+          additionalProperties: false
+    
+    # File upload with binary data
+    FileUpload:
+      type: object
+      required: [filename, contentType, size, data]
+      properties:
+        filename:
+          type: string
+          pattern: '^[a-zA-Z0-9._-]+\.[a-zA-Z0-9]+$'
+          minLength: 1
+          maxLength: 255
+        contentType:
+          type: string
+          pattern: '^[a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_.]*$'
+        size:
+          type: integer
+          minimum: 1
+          maximum: 104857600  # 100MB
+        data:
+          $ref: '#/components/schemas/Base64Data'
+        checksum:
+          type: string
+          pattern: '^[a-fA-F0-9]{32}$'  # MD5 hash
+          nullable: true
+        metadata:
+          type: object
+          properties:
+            description:
+              type: string
+              maxLength: 500
+            tags:
+              type: array
+              items:
+                type: string
+                minLength: 1
+                maxLength: 30
+              maxItems: 10
+            uploadedBy:
+              $ref: '#/components/schemas/UUID'
+            uploadedAt:
+              $ref: '#/components/schemas/DateTime'
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+    
+    # Notification system
+    NotificationChannel:
+      type: string
+      enum: [email, sms, push, webhook, slack]
+    
+    NotificationTemplate:
+      type: object
+      required: [id, subject]
+      properties:
+        id:
+          type: string
+          pattern: '^[a-z][a-z0-9_]*$'
+          minLength: 1
+          maxLength: 50
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 5000
+          nullable: true
+        variables:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+              - type: array
+                items:
+                  type: string
+          maxProperties: 50
+    
+    NotificationRequest:
+      type: object
+      required: [recipients, template, channel]
+      properties:
+        recipients:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/Email'
+              - $ref: '#/components/schemas/PhoneNumber'
+              - $ref: '#/components/schemas/UUID'
+          minItems: 1
+          maxItems: 1000
+        template:
+          $ref: '#/components/schemas/NotificationTemplate'
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+        priority:
+          $ref: '#/components/schemas/Priority'
+          default: "medium"
+        scheduledAt:
+          $ref: '#/components/schemas/DateTime'
+          nullable: true
+        expiresAt:
+          $ref: '#/components/schemas/DateTime'
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+          maxProperties: 20
+    
+    # Configuration with deeply nested objects
+    DatabaseConfig:
+      type: object
+      required: [host, port, database]
+      properties:
+        host:
+          $ref: '#/components/schemas/Hostname'
+        port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        database:
+          type: string
+          minLength: 1
+          maxLength: 63
+        username:
+          type: string
+          minLength: 1
+          maxLength: 63
+          nullable: true
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          nullable: true
+        ssl:
+          type: boolean
+          default: true
+        connectionPool:
+          type: object
+          properties:
+            minConnections:
+              $ref: '#/components/schemas/NonNegativeInteger'
+              default: 0
+            maxConnections:
+              $ref: '#/components/schemas/PositiveInteger'
+              default: 10
+            maxIdleTime:
+              $ref: '#/components/schemas/PositiveInteger'
+              default: 300
+          additionalProperties: false
+    
+    CacheConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        ttl:
+          $ref: '#/components/schemas/PositiveInteger'
+          default: 3600
+        maxSize:
+          $ref: '#/components/schemas/PositiveInteger'
+          default: 1000
+        strategy:
+          type: string
+          enum: [lru, lfu, fifo, random]
+          default: "lru"
+    
+    LoggingConfig:
+      type: object
+      properties:
+        level:
+          type: string
+          enum: [debug, info, warn, error, fatal]
+          default: "info"
+        format:
+          type: string
+          enum: [json, text, structured]
+          default: "json"
+        outputs:
+          type: array
+          items:
+            type: string
+            enum: [stdout, stderr, file, syslog]
+          minItems: 1
+          default: ["stdout"]
+        file:
+          type: object
+          properties:
+            path:
+              type: string
+              minLength: 1
+              maxLength: 255
+            maxSize:
+              $ref: '#/components/schemas/PositiveInteger'
+              default: 100
+            maxBackups:
+              $ref: '#/components/schemas/NonNegativeInteger'
+              default: 3
+            compress:
+              type: boolean
+              default: true
+          additionalProperties: false
+    
+    ConfigurationUpdate:
+      type: object
+      required: [version, environment]
+      properties:
+        version:
+          type: string
+          pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+        environment:
+          type: string
+          enum: [development, staging, production]
+        database:
+          $ref: '#/components/schemas/DatabaseConfig'
+          nullable: true
+        cache:
+          $ref: '#/components/schemas/CacheConfig'
+          nullable: true
+        logging:
+          $ref: '#/components/schemas/LoggingConfig'
+          nullable: true
+        features:
+          type: object
+          additionalProperties:
+            type: boolean
+          maxProperties: 100
+        secrets:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+          maxProperties: 50
+        updatedBy:
+          $ref: '#/components/schemas/UUID'
+        updatedAt:
+          $ref: '#/components/schemas/DateTime'
+        rollbackVersion:
+          type: string
+          pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+          nullable: true
+    
+    # Payment processing with complex validation
+    PaymentMethod:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [credit_card, debit_card, bank_transfer, digital_wallet, cryptocurrency]
+      discriminator:
+        propertyName: type
+    
+    CreditCardPayment:
+      allOf:
+        - $ref: '#/components/schemas/PaymentMethod'
+        - type: object
+          required: [cardNumber, expiryMonth, expiryYear, cvv, holderName]
+          properties:
+            cardNumber:
+              type: string
+              pattern: '^[0-9]{13,19}$'
+            expiryMonth:
+              type: integer
+              minimum: 1
+              maximum: 12
+            expiryYear:
+              type: integer
+              minimum: 2024
+              maximum: 2050
+            cvv:
+              type: string
+              pattern: '^[0-9]{3,4}$'
+            holderName:
+              type: string
+              minLength: 2
+              maxLength: 100
+              pattern: '^[a-zA-Z\s\-\.\']+$'
+            billingAddress:
+              $ref: '#/components/schemas/Address'
+    
+    BankTransferPayment:
+      allOf:
+        - $ref: '#/components/schemas/PaymentMethod'
+        - type: object
+          required: [accountNumber, routingNumber, accountType]
+          properties:
+            accountNumber:
+              type: string
+              pattern: '^[0-9]{8,17}$'
+            routingNumber:
+              type: string
+              pattern: '^[0-9]{9}$'
+            accountType:
+              type: string
+              enum: [checking, savings]
+            bankName:
+              type: string
+              minLength: 1
+              maxLength: 100
+    
+    PaymentRequest:
+      type: object
+      required: [paymentId, amount, currency, method, merchantId]
+      properties:
+        paymentId:
+          $ref: '#/components/schemas/UUID'
+        amount:
+          $ref: '#/components/schemas/Currency'
+        currency:
+          $ref: '#/components/schemas/CurrencyCode'
+        method:
+          oneOf:
+            - $ref: '#/components/schemas/CreditCardPayment'
+            - $ref: '#/components/schemas/BankTransferPayment'
+        merchantId:
+          $ref: '#/components/schemas/UUID'
+        orderId:
+          type: string
+          pattern: '^ORD-[0-9]{8}$'
+          nullable: true
+        description:
+          type: string
+          maxLength: 255
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+          maxProperties: 20
+        idempotencyKey:
+          $ref: '#/components/schemas/UUID'
+        captureMethod:
+          type: string
+          enum: [automatic, manual]
+          default: "automatic"
+        confirmationMethod:
+          type: string
+          enum: [automatic, manual]
+          default: "automatic"
+        setupFutureUsage:
+          type: string
+          enum: [on_session, off_session]
+          nullable: true
+        statementDescriptor:
+          type: string
+          pattern: '^[a-zA-Z0-9\s\*\.\-]{5,22}$'
+          nullable: true
+        receiptEmail:
+          $ref: '#/components/schemas/Email'
+          nullable: true
+        shipping:
+          $ref: '#/components/schemas/ShippingInfo'
+          nullable: true
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
