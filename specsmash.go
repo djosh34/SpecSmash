@@ -1,10 +1,17 @@
 package SpecSmash
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"io"
 	"math"
+	"net/http"
+	"net/url"
+	"os"
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -618,8 +625,59 @@ func NewGenerationOptions() *GenerationOptions {
 	}
 }
 
+func ReadSpec(specPath string) (*openapi3.T, error) {
+	// load spec
+	b, err := os.Open(specPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return ReadSpecFromReader(b)
+}
+
+func ReadSpecFromReader(b io.Reader) (*openapi3.T, error) {
+	// kin-openapi to reuse our schema generator
+	loader := &openapi3.Loader{IsExternalRefsAllowed: true}
+	kinDoc, err := loader.LoadFromIoReader(b)
+	if err != nil {
+		return nil, err
+	}
+	if err := kinDoc.Validate(loader.Context); err != nil {
+		return nil, fmt.Errorf("kin-openapi validate errors: %v", err)
+	}
+
+	return kinDoc, nil
+
+}
+
 // GenFromSchema is a public wrapper that creates default options and generates from schema
 func GenFromSchema(schema *openapi3.Schema) *rapid.Generator[json.RawMessage] {
 	opts := NewGenerationOptions()
 	return opts.GenFromSchema(schema)
+}
+
+func ValidatePayload(ctx context.Context, payload []byte, p string, op *openapi3.Operation) error {
+	requestValidationInput := &openapi3filter.RequestValidationInput{
+		Request: &http.Request{
+			Method: "POST",
+			URL:    &url.URL{Path: p},
+			Body:   io.NopCloser(bytes.NewBuffer(payload)),
+			Header: http.Header{"Content-Type": []string{"application/json"}},
+		},
+	}
+	err := openapi3filter.ValidateRequestBody(ctx, requestValidationInput, op.RequestBody.Value)
+	return err
+}
+
+func GetSchema(op *openapi3.Operation) (*openapi3.SchemaRef, bool) {
+	if op == nil || op.RequestBody == nil {
+		return nil, false
+	}
+	media, ok := op.RequestBody.Value.Content["application/json"]
+	if !ok {
+		return nil, false
+	}
+	schema := media.Schema
+
+	return schema, true
 }
