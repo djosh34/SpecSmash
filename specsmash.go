@@ -331,9 +331,22 @@ func (opts *GenerationOptions) genObject(schema *openapi3.Schema) *rapid.Generat
 		allProps := make(map[string]*openapi3.SchemaRef)
 
 		// Add additional properties
-		isAllowedAdditionalProperties := true
-		if schema.AdditionalProperties.Has != nil && !*schema.AdditionalProperties.Has {
+		// additionalProperties: false → NOT allowed
+		// additionalProperties: true → allowed (any type)
+		// additionalProperties: { schema } → allowed (with schema)
+		// not specified + no properties → allowed (free-form object)
+		// not specified + has properties → NOT allowed
+		
+		isAllowedAdditionalProperties := false
+		
+		if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
+			isAllowedAdditionalProperties = true
+		} else if schema.AdditionalProperties.Has != nil && !*schema.AdditionalProperties.Has {
 			isAllowedAdditionalProperties = false
+		} else if schema.AdditionalProperties.Schema != nil {
+			isAllowedAdditionalProperties = true
+		} else if len(schema.Properties) == 0 {
+			isAllowedAdditionalProperties = true
 		}
 
 		if isAllowedAdditionalProperties {
