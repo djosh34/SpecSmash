@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3filter"
 	"io"
 	"math"
 	"net/http"
@@ -14,16 +13,24 @@ import (
 	"os"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/google/uuid"
 	"pgregory.net/rapid"
 )
+
+// PatternFunc is a function that generates strings matching a pattern.
+// It receives the pattern, format, minLength, maxLength, and *rapid.T.
+// Users should provide this function to handle custom patterns.
+type PatternFunc func(pattern string, format string, minLength int, maxLength int, t *rapid.T) string
 
 // GenerationOptions holds configuration for schema generation
 type GenerationOptions struct {
 	depth                   int
 	MaxDepth                int
 	AdditionalPropertiesMax int
+	PatternFunc             PatternFunc
 }
 
 // ---------------- Core Utilities ----------------
@@ -58,6 +65,21 @@ func marshal(v any) json.RawMessage {
 func (opts *GenerationOptions) genString(schema *openapi3.Schema) *rapid.Generator[json.RawMessage] {
 	// Custom string generator with early returns using draw
 	stringGen := rapid.Custom(func(t *rapid.T) string {
+		// Default string with length bounds
+		minLength := int(schema.MinLength)
+		maxLength := -1
+		if schema.MaxLength != nil {
+			maxLength = int(*schema.MaxLength)
+		}
+
+		// Handle pattern
+		if schema.Pattern != "" {
+			if opts.PatternFunc != nil {
+				return opts.PatternFunc(schema.Pattern, schema.Format, minLength, maxLength, t)
+			}
+			panic("schema has pattern '" + schema.Pattern + "' but no PatternFunc was provided. Use WithPatternFunc() to set a custom pattern generator.")
+		}
+
 		// Special formats with early returns
 		switch schema.Format {
 		case "uuid":
@@ -89,18 +111,7 @@ func (opts *GenerationOptions) genString(schema *openapi3.Schema) *rapid.Generat
 			return base64.StdEncoding.EncodeToString(b)
 		}
 
-		// Handle pattern
-		if schema.Pattern != "" {
-			// TODO: support actual ecma regex syntax
-			return rapid.StringMatching(schema.Pattern).Draw(t, "pattern")
-		}
 
-		// Default string with length bounds
-		minLength := int(schema.MinLength)
-		maxLength := -1
-		if schema.MaxLength != nil {
-			maxLength = int(*schema.MaxLength)
-		}
 		return rapid.StringN(minLength, maxLength, -1).Draw(t, "string")
 	})
 
@@ -264,10 +275,20 @@ func (opts *GenerationOptions) genArray(schema *openapi3.Schema) *rapid.Generato
 		var itemGen *rapid.Generator[json.RawMessage]
 		if schema.Items != nil {
 			// Increase depth for recursive calls
-			childOpts := &GenerationOptions{depth: opts.depth + 1}
+			childOpts := &GenerationOptions{
+				depth:                   opts.depth + 1,
+				MaxDepth:                opts.MaxDepth,
+				AdditionalPropertiesMax: opts.AdditionalPropertiesMax,
+				PatternFunc:             opts.PatternFunc,
+			}
 			itemGen = childOpts.GenFromSchema(schema.Items.Value)
 		} else {
-			childOpts := &GenerationOptions{depth: opts.depth + 1}
+			childOpts := &GenerationOptions{
+				depth:                   opts.depth + 1,
+				MaxDepth:                opts.MaxDepth,
+				AdditionalPropertiesMax: opts.AdditionalPropertiesMax,
+				PatternFunc:             opts.PatternFunc,
+			}
 			itemGen = childOpts.GenFromSchema(nil)
 		}
 
@@ -353,7 +374,12 @@ func (opts *GenerationOptions) genObject(schema *openapi3.Schema) *rapid.Generat
 		}
 
 		for propName, prop := range allProps {
-			childOpts := &GenerationOptions{depth: opts.depth + 1}
+			childOpts := &GenerationOptions{
+				depth:                   opts.depth + 1,
+				MaxDepth:                opts.MaxDepth,
+				AdditionalPropertiesMax: opts.AdditionalPropertiesMax,
+				PatternFunc:             opts.PatternFunc,
+			}
 			var propSchema *openapi3.Schema
 			if prop != nil {
 				propSchema = prop.Value
@@ -529,14 +555,24 @@ func (opts *GenerationOptions) handleAnyOf(schema *openapi3.Schema) *rapid.Gener
 
 		// If only one schema selected, just generate from it
 		if len(selectedIndices) == 1 {
-			childOpts := &GenerationOptions{depth: opts.depth + 1}
+			childOpts := &GenerationOptions{
+				depth:                   opts.depth + 1,
+				MaxDepth:                opts.MaxDepth,
+				AdditionalPropertiesMax: opts.AdditionalPropertiesMax,
+				PatternFunc:             opts.PatternFunc,
+			}
 			return childOpts.GenFromSchema(schema.AnyOf[selectedIndices[0]].Value).Draw(t, "anyOf-single")
 		}
 
 		// Multiple schemas selected - try to merge them like allOf
 		merged := make(map[string]json.RawMessage)
 		for _, idx := range selectedIndices {
-			childOpts := &GenerationOptions{depth: opts.depth + 1}
+			childOpts := &GenerationOptions{
+				depth:                   opts.depth + 1,
+				MaxDepth:                opts.MaxDepth,
+				AdditionalPropertiesMax: opts.AdditionalPropertiesMax,
+				PatternFunc:             opts.PatternFunc,
+			}
 			val := childOpts.GenFromSchema(schema.AnyOf[idx].Value).Draw(t, fmt.Sprintf("anyOf-%d", idx))
 			var submap map[string]json.RawMessage
 			if err := json.Unmarshal(val, &submap); err == nil {
@@ -560,7 +596,12 @@ func (opts *GenerationOptions) handleOneOf(schema *openapi3.Schema) *rapid.Gener
 		var gens []*rapid.Generator[json.RawMessage]
 		for _, sub := range schema.OneOf {
 			// Increase depth for recursive calls
-			childOpts := &GenerationOptions{depth: opts.depth + 1}
+			childOpts := &GenerationOptions{
+				depth:                   opts.depth + 1,
+				MaxDepth:                opts.MaxDepth,
+				AdditionalPropertiesMax: opts.AdditionalPropertiesMax,
+				PatternFunc:             opts.PatternFunc,
+			}
 			gens = append(gens, childOpts.GenFromSchema(sub.Value))
 		}
 		return rapid.OneOf(gens...).Draw(t, "OneOf-Choice")
@@ -622,7 +663,15 @@ func NewGenerationOptions() *GenerationOptions {
 		depth:                   0,
 		MaxDepth:                10,
 		AdditionalPropertiesMax: 10,
+		PatternFunc:             nil,
 	}
+}
+
+// WithPatternFunc sets a custom pattern generator function.
+// The pattern function will be called for any schema that has a pattern constraint.
+func (opts *GenerationOptions) WithPatternFunc(f PatternFunc) *GenerationOptions {
+	opts.PatternFunc = f
+	return opts
 }
 
 func ReadSpec(specPath string) (*openapi3.T, error) {

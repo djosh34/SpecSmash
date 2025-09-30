@@ -22,8 +22,9 @@ SpecSmash generates random test data that conforms to your OpenAPI 3.0 schemas. 
   - Arrays with various item types
   - oneOf, anyOf, allOf compositions
   - Nullable fields
-  - Min/max constraints, enums, patterns
+  - Min/max constraints, enums
   - Additional properties
+- **Custom Pattern Generators** - Provide your own pattern matching functions for regex patterns and string formats
 
 ## Installation
 
@@ -44,7 +45,7 @@ import (
 
 func TestMyAPI(t *testing.T) {
     // Load your OpenAPI spec
-    spec, err := SpecSmash.ReadSpec(t, "testdata/openapi.yaml")
+    spec, err := SpecSmash.ReadSpec("testdata/openapi.yaml")
     if err != nil {
         t.Fatal(err)
     }
@@ -64,10 +65,60 @@ func TestMyAPI(t *testing.T) {
 }
 ```
 
+## Pattern Matching
+
+SpecSmash requires you to provide a custom pattern function for schemas that use `pattern` constraints or certain string formats (email, hostname, ipv4, ipv6, uri, uri-reference). This is because ECMA regex patterns are not natively supported.
+
+### Using Pattern Functions
+
+```go
+import (
+    "testing"
+    "github.com/djosh34/specsmash"
+    "pgregory.net/rapid"
+)
+
+func TestWithPatterns(t *testing.T) {
+    spec, err := SpecSmash.ReadSpec("testdata/openapi.yaml")
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    // Create generation options with a custom pattern function
+    opts := SpecSmash.NewGenerationOptions().WithPatternFunc(
+        func(pattern string, format string, minLength int, maxLength int, t *rapid.T) string {
+            // Use rapid.StringMatching or your own implementation
+            // NOTE: rapid.StringMatching uses RE2 syntax, not ECMA
+            return rapid.StringMatching(pattern).Draw(t, "pattern-"+format)
+        },
+    )
+
+    rapid.Check(t, func(t *rapid.T) {
+        schema := spec.Components.Schemas["User"].Value
+        
+        // Use the custom options
+        generator := opts.GenFromSchema(schema)
+        data := generator.Draw(t, "user-data")
+        
+        // ... your test logic here
+    })
+}
+```
+
+The pattern function receives:
+- `pattern` - The regex pattern from the schema (or a suggested pattern for formats)
+- `format` - The string format (e.g., "email", "ipv4", or empty string for custom patterns)
+- `minLength` - Minimum string length constraint from the schema
+- `maxLength` - Maximum string length constraint from the schema (-1 if not set)
+- `t` - The rapid.T instance for drawing values
+
+**Important**: If your schema contains patterns or certain string formats and you don't provide a `PatternFunc`, the generator will panic with a helpful error message.
+
 ## Limitations
 
 - `multipleOf` is not fully supported due to implementation errors (in this version). It will generate valid multipleOfs most of the time, unless you have very small multipliers that will cause precision issues
 - `anyOf` when both have a shared property, the generator will error (in this version)
+- Pattern matching requires a user-provided function due to ECMA regex incompatibility
 
 
 ## How It Works
