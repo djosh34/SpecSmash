@@ -73,10 +73,12 @@ func (opts *GenerationOptions) genString(schema *openapi3.Schema) *rapid.Generat
 		}
 
 		// Handle pattern
+		if opts.PatternFunc != nil {
+			// Always use the custom pattern function when provided
+			return opts.PatternFunc(schema.Pattern, schema.Format, minLength, maxLength, t)
+		}
+
 		if schema.Pattern != "" {
-			if opts.PatternFunc != nil {
-				return opts.PatternFunc(schema.Pattern, schema.Format, minLength, maxLength, t)
-			}
 			panic("schema has pattern '" + schema.Pattern + "' but no PatternFunc was provided. Use WithPatternFunc() to set a custom pattern generator.")
 		}
 
@@ -338,7 +340,6 @@ func (opts *GenerationOptions) genObject(schema *openapi3.Schema) *rapid.Generat
 		// not specified + has properties → NOT allowed
 		
 		isAllowedAdditionalProperties := false
-		
 		if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
 			isAllowedAdditionalProperties = true
 		} else if schema.AdditionalProperties.Has != nil && !*schema.AdditionalProperties.Has {
